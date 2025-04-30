@@ -3,6 +3,7 @@
 
 ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=KunwarPrabhat&layout=compact) <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExYnMxMmhpNmkxZ3dxOWpzNTZmbDRoemRleWpuMHppZm14bndobGlubiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lP8ezu4iNVmZYOZn3j/giphy.gif" width="200"/>
 
+
 [![trophy](https://github-profile-trophy.vercel.app/?username=KunwarPrabhat&theme=dracula&rank=-?&margin-w=4&no-frame=true)](https://github.com/KunwarPrabhat)
 
 
@@ -11,5 +12,7 @@
        alt="KunwarPrabhat's GitHub stats" 
        height="150px" />
 </a>
+
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=KunwarPrabhat.KunwarPrabhat)
 
 
