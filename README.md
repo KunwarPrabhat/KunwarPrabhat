@@ -1,6 +1,6 @@
 
 
-![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=KunwarPrabhat&layout=compact&cache_seconds=10)
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=KunwarPrabhat&layout=compact)
 
 [![trophy](https://github-profile-trophy.vercel.app/?username=KunwarPrabhat&theme=dracula&rank=-?&margin-w=4&no-frame=true)](https://github.com/KunwarPrabhat)
 
