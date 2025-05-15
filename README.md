@@ -12,8 +12,6 @@
        height="150px" />
 </a>
 
-![visitors](https://visitor-badge.laobi.icu/badge?page_id=KunwarPrabhat.KunwarPrabhat)
-
 
 <h1 align="center">Hi there 👋</h1>
 <p align="center">
@@ -85,8 +83,6 @@
 ### 📫 Reach Me
 Feel free to connect or collaborate — let’s build something amazing.
 
-<p align="center">
-  <img src="https://komarev.com/ghpvc/?username=your-github-username&style=flat-square&color=blue" alt="Profile views" />
-</p>
 
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=KunwarPrabhat.KunwarPrabhat)
 
