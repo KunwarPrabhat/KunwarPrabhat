@@ -1,0 +1,25 @@
+name: Generate README
+
+on:
+  push:
+    branches: [main]
+    paths: ['readme.source.md']
+  schedule:
+    - cron: '*/30 * * * *' # Runs every 30 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensure we have history to push back
+
+      - name: Generate README
+        uses: collectioneur/readme-aura@main
+        with:
+          github_token: ${{ secrets.METRICS_TOKEN }} # Use your custom PAT secret
