@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * fetch-contributions.js
- * 1. Fetches real GitHub contribution calendar data via GraphQL API
- * 2. Generates a standalone SVG fragment: contributions-calendar.svg
- * 3. The readme-aura source embeds it via <img> — a static pre-rendered SVG loads instantly
+ * 1. Fetches last 26 weeks of GitHub contribution data via GraphQL API
+ * 2. Generates a standalone contributions-calendar.svg (native SVG rects — zero render cost)
+ * 3. The readme-aura source embeds it via <img>
  */
 
 const https = require('https');
@@ -17,21 +17,31 @@ const OUT_DIR = path.join(__dirname, '..', 'assets');
 // Ensure output directory exists
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
-// Level → color mapping (glass-aurora style)
+// Level → color mapping (glowing aurora style)
 const COLORS = {
-  NONE: 'rgba(255,255,255,0.04)',
-  FIRST_QUARTILE: 'rgba(0,150,255,0.22)',
-  SECOND_QUARTILE: 'rgba(0,165,255,0.42)',
-  THIRD_QUARTILE: 'rgba(0,185,255,0.67)',
-  FOURTH_QUARTILE: 'rgba(0,205,255,0.92)'
+  NONE: 'rgba(255,255,255,0.05)',
+  FIRST_QUARTILE: 'rgba(0,160,255,0.3)',
+  SECOND_QUARTILE: 'rgba(0,175,255,0.52)',
+  THIRD_QUARTILE: 'rgba(0,195,255,0.75)',
+  FOURTH_QUARTILE: 'rgba(0,215,255,1.0)'
 };
 
-function generateCalendarSVG(weeks, totalContributions) {
-  const cell = 11, gap = 3;
+const GLOW = {
+  NONE: '',
+  FIRST_QUARTILE: 'filter:drop-shadow(0 0 3px rgba(0,160,255,0.4))',
+  SECOND_QUARTILE: 'filter:drop-shadow(0 0 5px rgba(0,175,255,0.6))',
+  THIRD_QUARTILE: 'filter:drop-shadow(0 0 7px rgba(0,195,255,0.8))',
+  FOURTH_QUARTILE: 'filter:drop-shadow(0 0 9px rgba(0,215,255,1.0))'
+};
+
+function generateCalendarSVG(weeksAll, totalContributions) {
+  // Only use last 26 weeks
+  const weeks = weeksAll.slice(-26);
+  const cell = 14, gap = 3;
   const offsetX = 28, offsetY = 30;
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  const svgW = 800;
+  const svgW = 26 * (cell + gap) + offsetX + 10;
   const svgH = offsetY + 7 * (cell + gap) + 24;
 
   let rects = '';
@@ -42,7 +52,9 @@ function generateCalendarSVG(weeks, totalContributions) {
       const color = COLORS[day.contributionLevel] || COLORS.NONE;
       const x = offsetX + wi * (cell + gap);
       const y = offsetY + di * (cell + gap);
-      rects += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${color}"/>`;
+      const lvl = day.contributionLevel || 'NONE';
+      const filterAttr = lvl === 'THIRD_QUARTILE' ? ' filter="url(#glow-md)"' : lvl === 'FOURTH_QUARTILE' ? ' filter="url(#glow-hi)"' : '';
+      rects += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="3" fill="${color}"${filterAttr}/>`;
 
       // Track month start positions
       if (di === 0 && day.date) {
@@ -68,13 +80,17 @@ function generateCalendarSVG(weeks, totalContributions) {
   const legendX = offsetX;
   const legendY = svgH - 12;
   const legendColors = Object.values(COLORS);
-  let legend = `<text x="${legendX}" y="${svgH - 2}" font-size="8" fill="rgba(255,255,255,0.2)" font-family="Inter,sans-serif">Less</text>`;
+  let legend = `<text x="${legendX}" y="${svgH - 2}" font-size="9" fill="rgba(255,255,255,0.28)" font-family="Inter,sans-serif" font-weight="600">Less</text>`;
   legendColors.forEach((c, i) => {
-    legend += `<rect x="${legendX + 30 + i * 14}" y="${legendY}" width="10" height="10" rx="2" fill="${c}"/>`;
+    legend += `<rect x="${legendX + 32 + i * 16}" y="${legendY}" width="12" height="12" rx="3" fill="${c}"/>`;
   });
-  legend += `<text x="${legendX + 104}" y="${svgH - 2}" font-size="8" fill="rgba(255,255,255,0.2)" font-family="Inter,sans-serif">More</text>`;
+  legend += `<text x="${legendX + 118}" y="${svgH - 2}" font-size="9" fill="rgba(255,255,255,0.28)" font-family="Inter,sans-serif" font-weight="600">More</text>`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="overflow:visible">
+  <defs>
+    <filter id="glow-md"><feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow-hi"><feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
   ${dayLabels}
   ${monthLabels}
   ${rects}
