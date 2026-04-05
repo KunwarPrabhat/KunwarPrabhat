@@ -71,10 +71,10 @@
   <div style={{ display: 'flex', width: '100%', height: 100, background: 'rgba(10,8,18,0.7)', borderRadius: 16, alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(110,80,220,0.15)', zIndex: 10 }}>
     <div style={{ display: 'flex', gap: 30, alignItems: 'center'}}>
       {[
-        { val: 0, label: 'Stars', color: '#b8860b' },
-        { val: 0, label: 'Forks', color: '#8b7ec8' },
-        { val: 0, label: 'Repos', color: '#5a9ca8' },
-        { val: 0, label: 'Commits', color: '#7ee7ff' }
+        { val: 3, label: 'Stars', color: '#b8860b' },
+        { val: 4, label: 'Forks', color: '#8b7ec8' },
+        { val: 30, label: 'Repos', color: '#5a9ca8' },
+        { val: 245, label: 'Commits', color: '#7ee7ff' }
       ].map((item, i) => (
         <React.Fragment key={item.label}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -91,10 +91,56 @@
   <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: 180, background: 'rgba(10,8,18,0.7)', borderRadius: 16, padding: '24px 30px', border: '1px solid rgba(110,80,220,0.15)', zIndex: 10 }}>
     <span style={{ fontSize: 10, color: 'rgba(120,200,255,0.7)', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16, fontWeight: 600 }}>Most Used Languages</span>
     <div style={{ display: 'flex', width: '100%', height: 6, borderRadius: 3, overflow: 'hidden', marginBottom: 16, background: 'rgba(255,255,255,0.05)' }}>
-
+      <div style={{ width: '47.4%', height: '100%', background: '#178600' }} />
+      <div style={{ width: '12.5%', height: '100%', background: '#222c37' }} />
+      <div style={{ width: '11.1%', height: '100%', background: '#f34b7d' }} />
+      <div style={{ width: '10.9%', height: '100%', background: '#f1e05a' }} />
+      <div style={{ width: '7.0%', height: '100%', background: '#663399' }} />
+      <div style={{ width: '3.9%', height: '100%', background: '#dd1100' }} />
+      <div style={{ width: '3.2%', height: '100%', background: '#e34c26' }} />
+      <div style={{ width: '2.5%', height: '100%', background: '#aace60' }} />
     </div>
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#178600', boxShadow: '0 0 6px #17860040' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>C#</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>47.4%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#222c37', boxShadow: '0 0 6px #222c3740' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>ShaderLab</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>12.5%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#f34b7d', boxShadow: '0 0 6px #f34b7d40' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>C++</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>11.1%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#f1e05a', boxShadow: '0 0 6px #f1e05a40' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>JavaScript</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>10.9%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#663399', boxShadow: '0 0 6px #66339940' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>CSS</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>7.0%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#dd1100', boxShadow: '0 0 6px #dd110040' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>Mathematica</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>3.9%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#e34c26', boxShadow: '0 0 6px #e34c2640' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>HTML</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>3.2%</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '#aace60', boxShadow: '0 0 6px #aace6040' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>HLSL</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>2.5%</span>
+      </div>
     </div>
   </div>
 
