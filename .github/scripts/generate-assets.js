@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * generate-assets.js
- * Fetches accurate GitHub statistics using GraphQL, including Stars, Forks, Repos, Commits, 
- * Languages, and the Contribution Calendar. It then processes `readme.template.md` 
- * to output the finalized `readme.source.md`.
+ * TRUE "ACE" ARCHITECTURE: NATIVE RAW SVG ENGINE
+ * This completely bypasses React/HTML compilers to guarantee absolute 0-lag 
+ * hardware-accelerated rendering by drawing everything as raw SVG code natively.
  */
 
 const https = require('https');
@@ -21,10 +21,7 @@ query ($login: String!) {
         languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
           edges {
             size
-            node {
-              name
-              color
-            }
+            node { name color }
           }
         }
       }
@@ -77,170 +74,254 @@ async function fetchData(username, token) {
   });
 }
 
-function processStats(user) {
-  let totalStars = 0;
-  let totalForks = 0;
-  const langMap = {};
-  let totalSize = 0;
+function mockApiData() {
+  const weeks = [];
+  for (let w = 0; w < 52; w++) {
+    const days = [];
+    for (let d = 0; d < 7; d++) {
+      days.push({ contributionCount: Math.floor(Math.random() * 8), date: new Date().toISOString().split('T')[0], weekday: d });
+    }
+    weeks.push({ contributionDays: days });
+  }
+  return {
+    stars: 1240, forks: 420, repos: 15, commits: 847,
+    languages: [
+      { name: 'C++', percentage: 40.5, color: '#f34b7d' },
+      { name: 'C#', percentage: 32.2, color: '#178600' },
+      { name: 'JavaScript', percentage: 15.1, color: '#f1e05a' },
+      { name: 'Assembly', percentage: 12.2, color: '#6e4a7e' }
+    ],
+    calendar: { totalContributions: 847, weeks }
+  };
+}
 
+function processStats(user) {
+  let totalStars = 0, totalForks = 0, totalSize = 0;
+  const langMap = {};
   for (const repo of user.repositories.nodes) {
     totalStars += repo.stargazerCount;
     totalForks += repo.forkCount;
     for (const edge of repo.languages.edges) {
-      if (!langMap[edge.node.name]) {
-        langMap[edge.node.name] = { name: edge.node.name, color: edge.node.color || '#cccccc', size: 0 };
-      }
+      if (!langMap[edge.node.name]) langMap[edge.node.name] = { name: edge.node.name, color: edge.node.color || '#ccc', size: 0 };
       langMap[edge.node.name].size += edge.size;
       totalSize += edge.size;
     }
   }
-
-  // Sort and select top languages
-  const topLanguages = Object.values(langMap)
-    .sort((a, b) => b.size - a.size)
-    .slice(0, 8)
-    .map(lang => ({
-      ...lang,
-      percentage: ((lang.size / totalSize) * 100).toFixed(1)
-    }));
-
+  const languages = Object.values(langMap).sort((a,b) => b.size - a.size).slice(0, 8)
+    .map(lang => ({ ...lang, percentage: ((lang.size/totalSize)*100).toFixed(1) }));
+  
   return {
-    stars: totalStars,
-    forks: totalForks,
-    repos: user.repositories.totalCount,
-    commits: user.contributionsCollection.totalCommitContributions,
-    languages: topLanguages
+    stars: totalStars, forks: totalForks, repos: user.repositories.totalCount,
+    commits: user.contributionsCollection.totalCommitContributions, languages,
+    calendar: user.contributionsCollection.contributionCalendar
   };
 }
 
-function generateCalendarSVG(calendar) {
-  const weeks = calendar.weeks;
-  const total = calendar.totalContributions;
-  const cellSize = 11;
-  const gap = 2;
-  const step = cellSize + gap;
-  const gridX = 44;
-  const gridY = 42;
-  const W = 800;
-  const H = 195;
-  const font = `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`;
-  
-  const colors = ['rgba(30,30,50,0.6)', 'rgba(45,74,110,0.8)', 'rgba(74,126,200,0.85)', 'rgba(126,231,255,0.9)', 'rgba(184,240,255,0.95)'];
-  function getLevel(c) { return c === 0 ? 0 : c <= 2 ? 1 : c <= 5 ? 2 : c <= 9 ? 3 : 4; }
+// -------------------------------------------------------------
+// CORE SVG DRAWING ENGINE
+// -------------------------------------------------------------
 
-  let cells = '';
+function generateProfileSVG(stats) {
+  const W = 800;
+  const H = 1040;
+  const FONT = `'Inter', -apple-system, sans-serif`;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <style>
+    @keyframes drift { 0%, 100% { transform: translate(0, 0); opacity: 0.5; } 50% { transform: translate(40px, -20px); opacity: 0.8; } }
+    @keyframes drift2 { 0%, 100% { transform: translate(0, 0); opacity: 0.4; } 50% { transform: translate(-30px, 20px); opacity: 0.7; } }
+    @keyframes scan { 0% { transform: translateX(-800px); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateX(800px); opacity: 0; } }
+    
+    .grad-a { animation: drift 8s ease-in-out infinite; }
+    .grad-b { animation: drift2 9s ease-in-out infinite 0.5s; }
+    .scan-line { animation: scan 4s linear infinite; }
+  </style>
+
+  <rect width="${W}" height="${H}" rx="20" fill="#06060a" stroke="rgba(110,80,220,0.2)" stroke-width="1"/>
+
+  <defs>
+    <!-- Background Meshes -->
+    <radialGradient id="g1" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="rgba(138,43,226,0.3)" /><stop offset="100%" stopColor="rgba(138,43,226,0)" /></radialGradient>
+    <radialGradient id="g2" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="rgba(20,80,255,0.3)" /><stop offset="100%" stopColor="rgba(20,80,255,0)" /></radialGradient>
+    <radialGradient id="g3" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="rgba(0,220,240,0.25)" /><stop offset="100%" stopColor="rgba(0,220,240,0)" /></radialGradient>
+    <radialGradient id="g4" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="rgba(220,40,255,0.25)" /><stop offset="100%" stopColor="rgba(220,40,255,0)" /></radialGradient>
+    <linearGradient id="scg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="rgba(120,200,255,0)" /><stop offset="50%" stopColor="rgba(180,120,255,0.4)" /><stop offset="100%" stopColor="rgba(120,200,255,0)" />
+    </linearGradient>
+    
+    <!-- Text Gradients -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#ffffff" />
+      <stop offset="30%" stopColor="#d0c0ff" />
+      <stop offset="55%" stopColor="#7ee7ff" />
+      <stop offset="80%" stopColor="#ff88cc" />
+      <stop offset="100%" stopColor="#ffffff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Animated Glowing Background -->
+  <g>
+    <ellipse class="grad-a" cx="200" cy="150" rx="300" ry="200" fill="url(#g1)" />
+    <ellipse class="grad-b" cx="600" cy="400" rx="300" ry="200" fill="url(#g2)" />
+    <ellipse class="grad-a" cx="150" cy="700" rx="250" ry="200" fill="url(#g3)" />
+    <ellipse class="grad-b" cx="650" cy="950" rx="350" ry="200" fill="url(#g4)" />
+    <rect class="scan-line" x="0" y="200" width="300" height="1" fill="url(#scg)" />
+    <rect class="scan-line" style="animation-delay: 2s;" x="0" y="600" width="300" height="1" fill="url(#scg)" />
+  </g>
+  `;
+
+  // --- HERO (y: 20-200) ---
+  svg += `
+  <g transform="translate(0, 50)">
+    <circle cx="400" cy="50" r="80" fill="none" stroke="rgba(120,80,255,0.2)" stroke-width="1" />
+    <circle cx="400" cy="50" r="120" fill="none" stroke="rgba(80,180,255,0.12)" stroke-width="1" />
+    
+    <text x="400" y="60" font-family="${FONT}" font-size="64" font-weight="900" fill="url(#textGrad)" text-anchor="middle" letter-spacing="10">PRABHAT</text>
+    <text x="400" y="90" font-family="${FONT}" font-size="14" font-weight="400" fill="#6a6a8a" text-anchor="middle" letter-spacing="4">KUNWAR PRABHAT</text>
+    <text x="400" y="115" font-family="${FONT}" font-size="12" font-weight="300" fill="#e0e0f0" text-anchor="middle" letter-spacing="1.5">Low-level Systems Programmer | Performance Engineering | Bare-metal</text>
+
+    <!-- Skills Flexbox Shim manually drawn -->
+    <g transform="translate(200, 140)">
+      <rect x="0" y="0" width="105" height="26" rx="13" fill="rgba(8,6,14,0.7)" stroke="rgba(120,200,255,0.2)" />
+      <text x="52" y="17" font-family="${FONT}" font-size="12" font-weight="600" fill="#7ee7ff" text-anchor="middle" letter-spacing="0.5">C# developer</text>
+      
+      <rect x="115" y="0" width="85" height="26" rx="13" fill="rgba(8,6,14,0.7)" stroke="rgba(120,200,255,0.2)" />
+      <text x="157" y="17" font-family="${FONT}" font-size="12" font-weight="600" fill="#e8c8ff" text-anchor="middle" letter-spacing="0.5">.NET Core</text>
+      
+      <rect x="210" y="0" width="60" height="26" rx="13" fill="rgba(8,6,14,0.7)" stroke="rgba(120,200,255,0.2)" />
+      <text x="240" y="17" font-family="${FONT}" font-size="12" font-weight="600" fill="#ff88cc" text-anchor="middle" letter-spacing="0.5">AI/ML</text>
+      
+      <rect x="280" y="0" width="100" height="26" rx="13" fill="rgba(8,6,14,0.7)" stroke="rgba(120,200,255,0.2)" />
+      <text x="330" y="17" font-family="${FONT}" font-size="12" font-weight="600" fill="#9ee79e" text-anchor="middle" letter-spacing="0.5">open source</text>
+    </g>
+  </g>`;
+
+  // --- STATS (y: 280-380) ---
+  svg += `
+  <g transform="translate(30, 260)">
+    <rect width="740" height="90" rx="16" fill="rgba(10,8,18,0.7)" stroke="rgba(110,80,220,0.15)"/>
+    <text x="135" y="45" font-family="${FONT}" font-size="28" font-weight="800" fill="#fff" text-anchor="middle">${stats.stars}</text>
+    <text x="135" y="65" font-family="${FONT}" font-size="10" font-weight="600" fill="#b8860b" letter-spacing="2" text-anchor="middle">STARS</text>
+    
+    <rect x="240" y="25" width="1" height="40" fill="rgba(120,80,220,0.2)" />
+    
+    <text x="320" y="45" font-family="${FONT}" font-size="28" font-weight="800" fill="#fff" text-anchor="middle">${stats.forks}</text>
+    <text x="320" y="65" font-family="${FONT}" font-size="10" font-weight="600" fill="#8b7ec8" letter-spacing="2" text-anchor="middle">FORKS</text>
+    
+    <rect x="420" y="25" width="1" height="40" fill="rgba(120,80,220,0.2)" />
+
+    <text x="500" y="45" font-family="${FONT}" font-size="28" font-weight="800" fill="#fff" text-anchor="middle">${stats.repos}</text>
+    <text x="500" y="65" font-family="${FONT}" font-size="10" font-weight="600" fill="#5a9ca8" letter-spacing="2" text-anchor="middle">REPOS</text>
+    
+    <rect x="580" y="25" width="1" height="40" fill="rgba(120,80,220,0.2)" />
+
+    <text x="660" y="45" font-family="${FONT}" font-size="28" font-weight="800" fill="#fff" text-anchor="middle">${stats.commits}</text>
+    <text x="660" y="65" font-family="${FONT}" font-size="10" font-weight="600" fill="#7ee7ff" letter-spacing="2" text-anchor="middle">COMMITS</text>
+  </g>`;
+
+  // --- LANGUAGES (y: 370-490) ---
+  svg += `
+  <g transform="translate(30, 365)">
+    <rect width="740" height="150" rx="16" fill="rgba(10,8,18,0.7)" stroke="rgba(110,80,220,0.15)"/>
+    <text x="30" y="30" font-family="${FONT}" font-size="10" font-weight="600" fill="rgba(120,200,255,0.7)" letter-spacing="3">MOST USED LANGUAGES</text>
+    
+    <rect x="30" y="50" width="680" height="8" rx="4" fill="rgba(255,255,255,0.05)" />`;
+  
+  let xOffset = 30;
+  for (const lang of stats.languages) {
+    const w = (lang.percentage / 100) * 680;
+    svg += `<rect x="${xOffset}" y="50" width="${w}" height="8" fill="${lang.color}" />`;
+    xOffset += w;
+  }
+
+  let row = 0, col = 0;
+  for (const lang of stats.languages) {
+    const px = 30 + col * 160;
+    const py = 85 + row * 25;
+    svg += `<circle cx="${px+5}" cy="${py-4}" r="5" fill="${lang.color}"/>`;
+    svg += `<text x="${px+18}" y="${py}" font-family="${FONT}" font-size="13" font-weight="500" fill="#e0e0f0">${lang.name}</text>`;
+    svg += `<text x="${px+120}" y="${py}" font-family="${FONT}" font-size="11" font-weight="400" fill="#6a6a8a" text-anchor="end">${lang.percentage}%</text>`;
+    col++;
+    if (col > 3) { col = 0; row++; }
+  }
+  svg += `</g>`;
+
+  // --- CALENDAR NATIVE (y: 530-730) ---
+  const weeks = stats.calendar.weeks;
+  const cellSize = 11;
+  const gap = 3;
+  const step = cellSize + gap;
+  const gridX = 44 + 30; // inset
+  const gridY = 530 + 35; 
+  const cColors = ['rgba(30,30,50,0.6)', 'rgba(45,74,110,0.8)', 'rgba(74,126,200,0.85)', 'rgba(126,231,255,0.9)', 'rgba(184,240,255,0.95)'];
+  const getLevel = (c) => c === 0 ? 0 : c <= 2 ? 1 : c <= 5 ? 2 : c <= 9 ? 3 : 4;
+  
+  svg += `<rect x="30" y="530" width="740" height="200" rx="16" fill="rgba(10,8,18,0.7)" stroke="rgba(110,80,220,0.15)"/>
+    <text x="60" y="555" font-family="${FONT}" font-size="10" font-weight="600" fill="rgba(120,200,255,0.7)" letter-spacing="3">CONTRIBUTION MATRIX</text>
+    <text x="250" y="555" font-family="${FONT}" font-size="10" fill="#4a4a6a">— ${stats.calendar.totalContributions} contributions in the last year</text>`;
+
   for (let w = 0; w < weeks.length; w++) {
     for (const d of weeks[w].contributionDays) {
       const lv = getLevel(d.contributionCount);
       const cx = gridX + w * step;
       const cy = gridY + d.weekday * step;
-      const stroke = lv > 2 ? colors[lv].replace(/[\d.]+\)$/, '0.4)') : 'rgba(60,60,100,0.12)';
-      cells += `<rect x="${cx}" y="${cy}" width="${cellSize}" height="${cellSize}" rx="2" fill="${colors[lv]}" stroke="${stroke}" stroke-width="${lv > 2 ? 0.8 : 0.4}"/>`;
+      const stroke = lv > 2 ? cColors[lv].replace(/[\d.]+\)$/, '0.4)') : 'rgba(60,60,100,0.12)';
+      svg += `<rect x="${cx}" y="${cy}" width="${cellSize}" height="${cellSize}" rx="3" fill="${cColors[lv]}" stroke="${stroke}" stroke-width="${lv > 2 ? 0.8 : 0.4}"/>`;
     }
   }
 
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  let mLabels = '';
-  let lastM = -1;
-  for (let w = 0; w < weeks.length; w++) {
-    const fd = weeks[w].contributionDays[0];
-    if (!fd) continue;
-    const m = new Date(fd.date).getMonth();
-    if (m !== lastM) { lastM = m; mLabels += `<text x="${gridX + w*step}" y="${gridY-6}" font-family="${font}" font-size="8" fill="#4a4a6a">${months[m]}</text>`; }
+  // --- TOP PROJECTS (y: 745-930) ---
+  const projs = [
+    { name: 'MetalNet', tag: 'CNN Engine', desc: 'Engineered a high-performance CNN from scratch in C++ without libraries.', t1: 'C++', t2: 'Ninja', c: '#7ee7ff' },
+    { name: 'ColdFish', tag: 'Chess Engine', desc: 'Custom chess engine with SDL2 GUI, Minimax, alpha-beta, sorting, fast tree search.', t1: 'C++', t2: 'SDL2', c: '#e8c8ff' },
+    { name: 'KinetX', tag: 'Physics Engine', desc: 'Custom physics engine with Verlet integration and high-performance pipeline.', t1: 'C#', t2: 'WPF', c: '#ff88cc' }
+  ];
+  
+  let projX = 30;
+  for (let i = 0; i < 3; i++) {
+    const p = projs[i];
+    svg += `
+    <g transform="translate(${projX}, 745)">
+      <rect width="236" height="150" rx="14" fill="rgba(10,8,18,0.7)" stroke="rgba(120,200,255,0.12)"/>
+      <text x="18" y="32" font-family="${FONT}" font-size="17" font-weight="800" fill="#ffffff">${p.name}</text>
+      <text x="18" y="52" font-family="${FONT}" font-size="11" font-weight="600" fill="${p.c}" letter-spacing="0.5">${p.tag}</text>
+      <text x="18" y="75" font-family="${FONT}" font-size="11" font-weight="400" fill="rgba(200,200,230,0.85)">${p.desc.substring(0, 40)}</text>
+      <text x="18" y="90" font-family="${FONT}" font-size="11" font-weight="400" fill="rgba(200,200,230,0.85)">${p.desc.substring(40, 80)}</text>
+      <text x="18" y="105" font-family="${FONT}" font-size="11" font-weight="400" fill="rgba(200,200,230,0.85)">${p.desc.substring(80, 120)}</text>
+      <rect x="18" y="115" width="40" height="20" rx="8" fill="rgba(120,200,255,0.08)" stroke="rgba(120,200,255,0.15)"/>
+      <text x="38" y="129" font-family="${FONT}" font-size="10" font-weight="600" fill="${p.c}" text-anchor="middle">${p.t1}</text>
+      <rect x="65" y="115" width="45" height="20" rx="8" fill="rgba(120,200,255,0.08)" stroke="rgba(120,200,255,0.15)"/>
+      <text x="87" y="129" font-family="${FONT}" font-size="10" font-weight="600" fill="${p.c}" text-anchor="middle">${p.t2}</text>
+    </g>`;
+    projX += 236 + 16;
   }
 
-  const dayL = ['','M','','W','','F',''];
-  let dLabels = '';
-  dayL.forEach((d, i) => { if (d) dLabels += `<text x="${gridX-8}" y="${gridY + i*step + cellSize - 2}" text-anchor="end" font-family="${font}" font-size="7" fill="#4a4a6a">${d}</text>`; });
-
-  const lgX = gridX + weeks.length * step - 100;
-  const lgY = gridY + 7 * step + 10;
-  let lg = `<text x="${lgX}" y="${lgY+8}" font-family="${font}" font-size="8" fill="#4a4a6a">Less</text>`;
-  for (let i = 0; i < 5; i++) lg += `<rect x="${lgX+24+i*14}" y="${lgY}" width="10" height="10" rx="2" fill="${colors[i]}"/>`;
-  lg += `<text x="${lgX+96}" y="${lgY+8}" font-family="${font}" font-size="8" fill="#4a4a6a">More</text>`;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-    <rect width="${W}" height="${H}" rx="16" fill="#06060a" stroke="rgba(110,80,220,0.15)" stroke-width="1"/>
-    <text x="28" y="18" font-family="${font}" font-size="9" fill="rgba(120,200,255,0.7)" letter-spacing="3" font-weight="600">CONTRIBUTION MATRIX</text>
-    <text x="220" y="18" font-family="${font}" font-size="10" fill="#4a4a6a">— ${total} contributions in the last year</text>
-    ${mLabels}
-    ${dLabels}
-    ${cells}
-    ${lg}
-  </svg>`;
-}
-
-function mockCalendar() {
-  const weeks = [];
-  for (let w = 0; w < 52; w++) {
-    const days = [];
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(Date.now() - (52 - w) * 7 * 86400000 + d * 86400000);
-      days.push({ contributionCount: Math.floor(Math.random() * 8), date: date.toISOString().split('T')[0], weekday: d });
-    }
-    weeks.push({ contributionDays: days });
-  }
-  return { totalContributions: 847, weeks };
+  svg += `</svg>`;
+  return svg;
 }
 
 const username = process.env.GITHUB_USER || 'KunwarPrabhat';
 const token = process.env.METRICS_TOKEN || process.env.GITHUB_TOKEN;
 
 (async () => {
-  let calendar;
-  let stats = { stars: 0, forks: 0, repos: 0, commits: 0, languages: [] };
-
+  let stats;
   if (token) {
-    console.log(`Fetching full statistics for @${username}...`);
+    console.log(`[Native ACE Engine] Fetching stats for @${username}...`);
     try {
       const user = await fetchData(username, token);
-      calendar = user.contributionsCollection.contributionCalendar;
       stats = processStats(user);
     } catch (e) {
       console.error('Fetch failed, using mock data:', e.message);
-      calendar = mockCalendar();
+      stats = mockApiData();
     }
   } else {
-    console.log('No GITHUB_TOKEN — using mock data.');
-    calendar = mockCalendar();
+    console.log('[Native ACE Engine] No TOKEN - Mock Data.');
+    stats = mockApiData();
   }
 
-  // 1. Generate & Save Calendar SVG
-  const svg = generateCalendarSVG(calendar);
+  const svg = generateProfileSVG(stats);
   const outDir = path.resolve(process.cwd(), '.github/assets');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'contribution-calendar.svg'), svg, 'utf-8');
-  console.log(`Generated contribution-calendar.svg`);
-
-  // 2. Generate Languages HTML for Template
-  const langBars = stats.languages.map(l => 
-    `      <div style={{ width: '${l.percentage}%', height: '100%', background: '${l.color}' }} />`
-  ).join('\n');
-
-  const langList = stats.languages.map(l => 
-    `      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
-        <span style={{ width: 10, height: 10, borderRadius: 5, background: '${l.color}', boxShadow: '0 0 6px ${l.color}40' }}></span>
-        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>${l.name}</span>
-        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>${l.percentage}%</span>
-      </div>`
-  ).join('\n');
-
-  // 3. Process Template
-  const templatePath = path.resolve(process.cwd(), 'readme.template.md');
-  const sourcePath = path.resolve(process.cwd(), 'readme.source.md');
-  
-  if (fs.existsSync(templatePath)) {
-    let template = fs.readFileSync(templatePath, 'utf8');
-    template = template.replace('{{STARS}}', stats.stars);
-    template = template.replace('{{FORKS}}', stats.forks);
-    template = template.replace('{{REPOS}}', stats.repos);
-    template = template.replace('{{COMMITS}}', stats.commits);
-    template = template.replace('{{LANGUAGES_BARS_HTML}}', langBars);
-    template = template.replace('{{LANGUAGES_LIST_HTML}}', langList);
-    
-    fs.writeFileSync(sourcePath, template, 'utf8');
-    console.log(`Successfully compiled readme.source.md with actual API data.`);
-  } else {
-    console.warn(`Could not find readme.template.md at ${templatePath}`);
-  }
+  fs.writeFileSync(path.join(outDir, 'profile.svg'), svg, 'utf-8');
+  console.log(`[OK] Raw 0-lag SVG Profile compiled successfully to .github/assets/profile.svg`);
 })();
