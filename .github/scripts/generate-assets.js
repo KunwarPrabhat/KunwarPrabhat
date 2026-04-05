@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * generate-assets.js
- * Mimics the 'ACE' reference logic to generate a high-performance, real-data 
- * contribution calendar SVG using native rect elements.
+ * Fetches accurate GitHub statistics using GraphQL, including Stars, Forks, Repos, Commits, 
+ * Languages, and the Contribution Calendar. It then processes `readme.template.md` 
+ * to output the finalized `readme.source.md`.
  */
 
 const https = require('https');
@@ -12,7 +13,24 @@ const path = require('path');
 const QUERY = `
 query ($login: String!) {
   user(login: $login) {
+    repositories(first: 100, ownerAffiliations: OWNER, isFork: false, orderBy: {field: STARGAZERS, direction: DESC}) {
+      totalCount
+      nodes {
+        stargazerCount
+        forkCount
+        languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+          edges {
+            size
+            node {
+              name
+              color
+            }
+          }
+        }
+      }
+    }
     contributionsCollection {
+      totalCommitContributions
       contributionCalendar {
         totalContributions
         weeks {
@@ -57,6 +75,42 @@ async function fetchData(username, token) {
     req.write(body);
     req.end();
   });
+}
+
+function processStats(user) {
+  let totalStars = 0;
+  let totalForks = 0;
+  const langMap = {};
+  let totalSize = 0;
+
+  for (const repo of user.repositories.nodes) {
+    totalStars += repo.stargazerCount;
+    totalForks += repo.forkCount;
+    for (const edge of repo.languages.edges) {
+      if (!langMap[edge.node.name]) {
+        langMap[edge.node.name] = { name: edge.node.name, color: edge.node.color || '#cccccc', size: 0 };
+      }
+      langMap[edge.node.name].size += edge.size;
+      totalSize += edge.size;
+    }
+  }
+
+  // Sort and select top languages
+  const topLanguages = Object.values(langMap)
+    .sort((a, b) => b.size - a.size)
+    .slice(0, 8)
+    .map(lang => ({
+      ...lang,
+      percentage: ((lang.size / totalSize) * 100).toFixed(1)
+    }));
+
+  return {
+    stars: totalStars,
+    forks: totalForks,
+    repos: user.repositories.totalCount,
+    commits: user.contributionsCollection.totalCommitContributions,
+    languages: topLanguages
+  };
 }
 
 function generateCalendarSVG(calendar) {
@@ -134,11 +188,14 @@ const token = process.env.METRICS_TOKEN || process.env.GITHUB_TOKEN;
 
 (async () => {
   let calendar;
+  let stats = { stars: 0, forks: 0, repos: 0, commits: 0, languages: [] };
+
   if (token) {
-    console.log(`Fetching calendar for @${username}...`);
+    console.log(`Fetching full statistics for @${username}...`);
     try {
       const user = await fetchData(username, token);
       calendar = user.contributionsCollection.contributionCalendar;
+      stats = processStats(user);
     } catch (e) {
       console.error('Fetch failed, using mock data:', e.message);
       calendar = mockCalendar();
@@ -148,9 +205,42 @@ const token = process.env.METRICS_TOKEN || process.env.GITHUB_TOKEN;
     calendar = mockCalendar();
   }
 
+  // 1. Generate & Save Calendar SVG
   const svg = generateCalendarSVG(calendar);
   const outDir = path.resolve(process.cwd(), '.github/assets');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'contribution-calendar.svg'), svg, 'utf-8');
   console.log(`Generated contribution-calendar.svg`);
+
+  // 2. Generate Languages HTML for Template
+  const langBars = stats.languages.map(l => 
+    `      <div style={{ width: '${l.percentage}%', height: '100%', background: '${l.color}' }} />`
+  ).join('\n');
+
+  const langList = stats.languages.map(l => 
+    `      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
+        <span style={{ width: 10, height: 10, borderRadius: 5, background: '${l.color}', boxShadow: '0 0 6px ${l.color}40' }}></span>
+        <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>${l.name}</span>
+        <span style={{ fontSize: 11, color: '#6a6a8a', fontWeight: 400 }}>${l.percentage}%</span>
+      </div>`
+  ).join('\n');
+
+  // 3. Process Template
+  const templatePath = path.resolve(process.cwd(), 'readme.template.md');
+  const sourcePath = path.resolve(process.cwd(), 'readme.source.md');
+  
+  if (fs.existsSync(templatePath)) {
+    let template = fs.readFileSync(templatePath, 'utf8');
+    template = template.replace('{{STARS}}', stats.stars);
+    template = template.replace('{{FORKS}}', stats.forks);
+    template = template.replace('{{REPOS}}', stats.repos);
+    template = template.replace('{{COMMITS}}', stats.commits);
+    template = template.replace('{{LANGUAGES_BARS_HTML}}', langBars);
+    template = template.replace('{{LANGUAGES_LIST_HTML}}', langList);
+    
+    fs.writeFileSync(sourcePath, template, 'utf8');
+    console.log(`Successfully compiled readme.source.md with actual API data.`);
+  } else {
+    console.warn(`Could not find readme.template.md at ${templatePath}`);
+  }
 })();
