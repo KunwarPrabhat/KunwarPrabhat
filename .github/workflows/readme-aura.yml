@@ -2,29 +2,34 @@ name: Readme Profile Generation
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
-  workflow_dispatch:
+    - cron: "0 */6 * * *"   # every 6 hours (was every 30 min — overkill)
+  workflow_dispatch:          # manual trigger from Actions tab
+
+permissions:
+  contents: write             # required to push the generated SVG
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
-          
-      - name: Generate Native Profile SVG
+          node-version: 20
+
+      - name: Generate Unified Profile SVG
         run: node .github/scripts/generate-assets.js
         env:
-          METRICS_TOKEN: ${{ secrets.METRICS_TOKEN }}
+          GITHUB_USER:    KunwarPrabhat
+          METRICS_TOKEN:  ${{ secrets.METRICS_TOKEN }}
+          GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and Push
         run: |
-          git config --global user.name "github-actions[bot]"
+          git config --global user.name  "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .github/assets/profile.svg
-          git commit -m "chore: dynamically generated pure native SVG profile [skip ci]" || echo "No changes to commit"
+          git diff --cached --quiet || git commit -m "chore: update unified profile SVG [skip ci]"
           git push
