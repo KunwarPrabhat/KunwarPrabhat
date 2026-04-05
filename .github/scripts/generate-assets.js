@@ -23,6 +23,11 @@ const MAIN_QUERY = `
 query ($login: String!) {
   user(login: $login) {
     name
+    bio
+    company
+    location
+    websiteUrl
+    status { message emoji }
     createdAt
     repositories(first: 100, ownerAffiliations: OWNER, isFork: false, orderBy: {field: STARGAZERS, direction: DESC}) {
       totalCount
@@ -162,7 +167,20 @@ function processStats(user, allTimeCommits) {
       langColor: r.primaryLanguage ? (r.primaryLanguage.color || '#555') : '#555',
     }));
 
+  // Smart splitting for the Hero section
+  const nameParts = (user.name || 'User').trim().split(/\s+/);
+  const lastName  = nameParts.length > 1 ? nameParts.pop() : nameParts[0];
+  const firstName = nameParts.join(' ');
+
   return {
+    name:     user.name || 'User',
+    firstName,
+    lastName,
+    bio:      user.bio || '',
+    company:  user.company || '',
+    location: user.location || '',
+    website:  user.websiteUrl || '',
+    status:   user.status || null,
     stars:    totalStars,
     forks:    totalForks,
     repos:    user.repositories.totalCount,
@@ -192,7 +210,15 @@ function mockStats() {
     weeks.push({ contributionDays: days });
   }
   return {
-    stars: 0, forks: 0, repos: 12, commits: 0,
+    name: 'Kunwar Prabhat',
+    firstName: 'Kunwar',
+    lastName: 'Prabhat',
+    bio: 'Low-level systems programmer | Performance Engineering',
+    company: '',
+    location: '',
+    website: 'https://github.com/KunwarPrabhat',
+    status: { message: 'Coding...', emoji: '💭' },
+    stars: 1240, forks: 420, repos: 15, commits: 847,
     languages: [
       { name: 'C++',        percentage: 42.5, color: '#f34b7d' },
       { name: 'C#',         percentage: 30.2, color: '#178600' },
@@ -205,7 +231,7 @@ function mockStats() {
       { name: 'ColdFish',  desc: 'Chess engine with SDL2 GUI, Minimax, alpha-beta pruning.', stars: 0, forks: 0, lang: 'C++',  langColor: '#f34b7d' },
       { name: 'KinetX',    desc: 'Physics engine with Verlet integration and WPF rendering.', stars: 0, forks: 0, lang: 'C#',   langColor: '#178600' },
     ],
-    calendar: { totalContributions: 0, weeks },
+    calendar: { totalContributions: 847, weeks },
   };
 }
 
@@ -319,11 +345,11 @@ function generateSVG(stats) {
     <circle class="g-dt" cx="738" cy="${heroCY+42}" r="2"   fill="#e8c8ff" style="animation-delay:1.5s"/>
     <circle class="g-dt" cx="698" cy="${heroCY-52}" r="1.5" fill="#ff88cc" style="animation-delay:2.5s"/>
 
-    <text x="400" y="${heroCY-42}" text-anchor="middle" font-family="${font}" font-size="62" font-weight="900" fill="url(#tg)" letter-spacing="12" filter="url(#glow)">PRABHAT</text>
-    <text x="400" y="${heroCY-10}" text-anchor="middle" font-family="${font}" font-size="11" fill="rgba(126,231,255,.85)" letter-spacing="7" font-weight="700">KUNWAR PRABHAT</text>
+    <text x="400" y="${heroCY-42}" text-anchor="middle" font-family="${font}" font-size="62" font-weight="900" fill="url(#tg)" letter-spacing="12" filter="url(#glow)">${(process.env.HERO_TITLE || stats.lastName || 'PRABHAT').toUpperCase()}</text>
+    <text x="400" y="${heroCY-10}" text-anchor="middle" font-family="${font}" font-size="11" fill="rgba(126,231,255,.85)" letter-spacing="7" font-weight="700">${(process.env.HERO_SUBTITLE || stats.name || 'KUNWAR PRABHAT').toUpperCase()}</text>
     <line x1="240" y1="${heroCY+5}" x2="560" y2="${heroCY+5}" stroke="rgba(126,231,255,.2)" stroke-width="1"/>
-    <text x="400" y="${heroCY+28}" text-anchor="middle" font-family="${font}" font-size="10.5" fill="rgba(232,200,255,.8)" letter-spacing="2.5" font-weight="600">LOW-LEVEL SYSTEMS PROGRAMMER  |  PERFORMANCE ENGINEERING</text>
-    <text x="400" y="${heroCY+50}" text-anchor="middle" font-family="${font}" font-size="9.5"  fill="rgba(126,231,255,.6)"  letter-spacing="2" font-weight="500">BARE-METAL  •  C++ / C# / ASM  •  AI / ML  •  OPEN SOURCE</text>
+    <text x="400" y="${heroCY+28}" text-anchor="middle" font-family="${font}" font-size="10.5" fill="rgba(232,200,255,.8)" letter-spacing="2.5" font-weight="600">${(process.env.HERO_SLOGAN || stats.bio || 'LOW-LEVEL SYSTEMS PROGRAMMER').toUpperCase().substring(0, 80)}</text>
+    <text x="400" y="${heroCY+50}" text-anchor="middle" font-family="${font}" font-size="9.5"  fill="rgba(126,231,255,.6)"  letter-spacing="2" font-weight="500">${process.env.HERO_SKILLS || 'BARE-METAL  •  C++ / C# / ASM  •  AI / ML  •  OPEN SOURCE'}</text>
   </g>`;
   y += heroH + gap;
 
@@ -500,7 +526,12 @@ function generateSVG(stats) {
   y += projH;
 
   // ── FOOTER ───────────────────────────────────────────────────────────────────
-  const footer = `<text x="400" y="${y+22}" text-anchor="middle" font-family="${font}" font-size="8.5" fill="rgba(100,100,150,.4)" font-weight="600" letter-spacing="2">KUNWAR PRABHAT  •  LOW-LEVEL SYSTEMS  •  PERFORMANCE ENGINEERING</text>`;
+  const footerParts = [];
+  if (stats.name) footerParts.push(stats.name.toUpperCase());
+  if (stats.location) footerParts.push(stats.location.toUpperCase());
+  if (stats.company) footerParts.push(stats.company.toUpperCase());
+  const footerText = footerParts.length > 0 ? footerParts.join('  •  ') : 'KUNWAR PRABHAT  •  LOW-LEVEL SYSTEMS  •  PERFORMANCE ENGINEERING';
+  const footer = `<text x="400" y="${y+22}" text-anchor="middle" font-family="${font}" font-size="8.5" fill="rgba(100,100,150,.4)" font-weight="600" letter-spacing="2">${footerText.substring(0, 120)}</text>`;
 
   // ── ASSEMBLE ─────────────────────────────────────────────────────────────────
   return `<!-- Kunwar Prabhat Profile | Generated ${new Date().toISOString()} -->

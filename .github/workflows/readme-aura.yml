@@ -25,6 +25,11 @@ jobs:
           GITHUB_USER:    KunwarPrabhat
           METRICS_TOKEN:  ${{ secrets.METRICS_TOKEN }}
           GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
+          # Optional Overrides (Set these in Repo Settings -> Secrets and Variables -> Actions -> Variables)
+          HERO_TITLE:     ${{ vars.HERO_TITLE }}
+          HERO_SUBTITLE:  ${{ vars.HERO_SUBTITLE }}
+          HERO_SLOGAN:    ${{ vars.HERO_SLOGAN }}
+          HERO_SKILLS:    ${{ vars.HERO_SKILLS }}
 
       - name: Commit and Push
         run: |
