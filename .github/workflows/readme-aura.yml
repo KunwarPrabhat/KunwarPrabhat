@@ -2,7 +2,7 @@ name: Readme Profile Generation
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # every 6 hours (was every 30 min — overkill)
+    - cron: "*/30 * * * *"   # every 30 min as requested
   workflow_dispatch:          # manual trigger from Actions tab
 
 permissions:

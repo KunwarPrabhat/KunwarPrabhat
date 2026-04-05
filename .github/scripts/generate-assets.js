@@ -564,7 +564,8 @@ const token    = process.env.METRICS_TOKEN || process.env.GITHUB_TOKEN;
   let stats;
 
   if (token) {
-    console.log(`[Profile Engine] Fetching data for @${username}...`);
+    const tokenType = process.env.METRICS_TOKEN ? 'METRICS_TOKEN' : 'GITHUB_TOKEN (fallback)';
+    console.log(`[Profile Engine] Fetching data for @${username} using ${tokenType}...`);
     try {
       const user = await fetchData(username, token);
       console.log(`  Account created: ${user.createdAt}`);
