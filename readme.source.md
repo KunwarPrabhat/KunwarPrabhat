@@ -70,52 +70,7 @@
 </div>
 ```
 
-```aura width=800 height=190
-<div style={{ display: 'flex', width: '100%', height: '100%', gap: 14, fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden', background: '#06060a', borderRadius: 18, padding: 20, border: '1px solid rgba(110,80,220,0.15)' }}>
-  <style>
-    {`
-      @keyframes about-drift-r { 0%, 100% { transform: translate(0, 0); opacity: 0.75; } 50% { transform: translate(35px, -18px); opacity: 1.1; } }
-      @keyframes about-drift-l { 0%, 100% { transform: translate(0, 0); opacity: 0.65; } 50% { transform: translate(-30px, 16px); opacity: 1; } }
-      #about-g1 { animation: about-drift-r 7.5s ease-in-out infinite; }
-      #about-g2 { animation: about-drift-l 6.5s ease-in-out infinite 0.2s; }
-    `}
-  </style>
-  <svg width="800" height="190" style={{ position: 'absolute', top: 0, left: 0 }}>
-    <defs>
-      <radialGradient id="abg1" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="rgba(0,180,240,0.55)" />
-        <stop offset="100%" stopColor="rgba(0,180,240,0)" />
-      </radialGradient>
-      <radialGradient id="abg2" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="rgba(140,40,240,0.5)" />
-        <stop offset="100%" stopColor="rgba(140,40,240,0)" />
-      </radialGradient>
-    </defs>
-    <ellipse id="about-g1" cx="80" cy="95" rx="170" ry="110" fill="url(#abg1)" />
-    <ellipse id="about-g2" cx="720" cy="85" rx="150" ry="100" fill="url(#abg2)" />
-  </svg>
-  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, background: 'rgba(10,8,18,0.7)', borderRadius: 14, padding: 22, border: '1px solid rgba(100,70,200,0.18)', zIndex: 10, justifyContent: 'center' }}>
-    <span style={{ fontSize: 10, color: 'rgba(120,200,255,0.7)', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 10, fontWeight: 600 }}>Profile</span>
-    <span style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', marginBottom: 6 }}>Systems Programmer</span>
-    <span style={{ fontSize: 12, color: 'rgba(200,200,230,0.8)', lineHeight: 1.5 }}>Specializing in C#, C++ and x86 Assembly. Deep interest in custom CNN engines, physics simulation, and high-performance game logic. Exploring low-level control over memory and computation.</span>
-  </div>
-  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, background: 'rgba(10,8,18,0.7)', borderRadius: 14, padding: 22, border: '1px solid rgba(100,70,200,0.18)', zIndex: 10, justifyContent: 'center' }}>
-    <span style={{ fontSize: 10, color: 'rgba(200,120,255,0.7)', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 10, fontWeight: 600 }}>Projects Focus</span>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-      {[
-        { name: 'MetalNet', detail: 'Custom CNN Engine from scratch', color: '#7ee7ff' },
-        { name: 'ColdFish', detail: 'Chess Engine with SDL2 GUI', color: '#e8c8ff' },
-        { name: 'KinetX', detail: 'Physics Engine with Verlet', color: '#ff88cc' }
-      ].map((p) => (
-        <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 4, background: p.color, boxShadow: `0 0 6px ${p.color}80` }}></span>
-          <span style={{ fontSize: 13, color: '#e0e0f0', fontWeight: 500 }}>{p.name} - {p.detail}</span>
-        </div>
-      ))}
-    </div>
-  </div>
-</div>
-```
+
 
 ```aura width=800 height=70
 <div style={{ display: 'flex', gap: 10, padding: '14px 22px', width: '100%', height: '100%', background: '#06060a', borderRadius: 30, alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden', border: '1px solid rgba(110,80,220,0.15)' }}>

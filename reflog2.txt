@@ -1,0 +1,25 @@
+﻿a95e7ff HEAD@{0}: reset: moving to a95e7ff
+678a440 HEAD@{1}: commit: perf: unified, high-performance single-SVG profile with zero lag
+437de05 HEAD@{2}: reset: moving to origin/main
+7a9329e HEAD@{3}: rebase (abort): returning to refs/heads/main
+437de05 HEAD@{4}: pull --rebase -X theirs origin main (start): checkout 437de05894aa50f44dadcb4267642008b9b6a604
+7a9329e HEAD@{5}: commit: perf: unified, high-performance single-SVG profile with zero lag
+58b1fa8 HEAD@{6}: pull --rebase -X theirs origin main (finish): returning to refs/heads/main
+58b1fa8 HEAD@{7}: pull --rebase -X theirs origin main (pick): perf: high-fidelity ACE-style profile with zero-lag contribution matrix
+54876a2 HEAD@{8}: pull --rebase -X theirs origin main (start): checkout 54876a2d8135cc4b77adf73eefb66d2871ee117a
+704ef5e HEAD@{9}: commit: perf: high-fidelity ACE-style profile with zero-lag contribution matrix
+7e224d2 HEAD@{10}: pull --rebase -X theirs origin main (finish): returning to refs/heads/main
+7e224d2 HEAD@{11}: pull --rebase -X theirs origin main (pick): perf: half-year glowing calendar, enhanced aurora animations, and UI refinements
+7379dbe HEAD@{12}: pull --rebase -X theirs origin main (start): checkout 7379dbe185873b319e4f460caaea7c3a1dd0c9c8
+68b2d64 HEAD@{13}: rebase (abort): returning to refs/heads/main
+7379dbe HEAD@{14}: pull --rebase origin main (start): checkout 7379dbe185873b319e4f460caaea7c3a1dd0c9c8
+68b2d64 HEAD@{15}: commit: perf: finalize half-year glowing calendar and optimized animations
+66d44e1 HEAD@{16}: commit: perf: half-year glowing calendar, enhanced aurora animations, and UI refinements
+da276ec HEAD@{17}: commit (merge): merge: keep optimized calendar version
+d598e49 HEAD@{18}: commit: feat: real GitHub contribution calendar via pre-rendered SVG rect elements, zero-lag matrix
+7609469 HEAD@{19}: commit (merge): merge: resolve conflict, keep optimized local version
+5e73f9e HEAD@{20}: rebase (abort): returning to refs/heads/main
+dfb3e97 HEAD@{21}: pull --rebase origin main (start): checkout dfb3e9702d8628199f049da52704624f751bf9af
+5e73f9e HEAD@{22}: commit: perf: optimize SVG (635KB->336KB), real contribution graph, embedded streak, visitors top center
+7044a01 HEAD@{23}: commit: feat: Glassmorphism overhaul & 30-min automated setup
+293dcd0 HEAD@{24}: clone: from https://github.com/KunwarPrabhat/KunwarPrabhat
