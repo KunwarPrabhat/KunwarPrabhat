@@ -155,17 +155,41 @@ function processStats(user, allTimeCommits) {
     .map(l => ({ ...l, percentage: +((l.size / totalSize) * 100).toFixed(1) }));
 
   const topProjects = user.repositories.nodes
-    .filter(r => r.name && r.description)
+    .filter(r => r.name && r.description && r.name.toLowerCase() !== 'filecrypt')
     .sort((a, b) => b.stargazerCount - a.stargazerCount)
-    .slice(0, 3)
-    .map(r => ({
-      name: r.name,
-      desc: r.description || '',
-      stars: r.stargazerCount,
-      forks: r.forkCount,
-      lang:  r.primaryLanguage ? r.primaryLanguage.name : null,
-      langColor: r.primaryLanguage ? (r.primaryLanguage.color || '#555') : '#555',
-    }));
+    .map(r => {
+      let name = r.name;
+      let desc = r.description || '';
+      if (name.toLowerCase() === 'chessengine') {
+        name = 'ColdFish';
+        desc = 'Custom chess engine written in C++ with SDL2 GUI.';
+      }
+      return {
+        name,
+        desc,
+        stars: r.stargazerCount,
+        forks: r.forkCount,
+        lang:  r.primaryLanguage ? r.primaryLanguage.name : null,
+        langColor: r.primaryLanguage ? (r.primaryLanguage.color || '#555') : '#555',
+      };
+    })
+    .slice(0, 3);
+
+  // If ColdFish isn't in the top 3 but exists, swap the last one for it
+  const coldFishIndex = topProjects.findIndex(p => p.name === 'ColdFish');
+  if (coldFishIndex === -1) {
+    const cf = user.repositories.nodes.find(r => r.name.toLowerCase() === 'chessengine');
+    if (cf) {
+        topProjects[2] = {
+            name: 'ColdFish',
+            desc: 'Custom chess engine written in C++ with SDL2 GUI.',
+            stars: cf.stargazerCount,
+            forks: cf.forkCount,
+            lang: cf.primaryLanguage ? cf.primaryLanguage.name : 'C++',
+            langColor: cf.primaryLanguage ? (cf.primaryLanguage.color || '#f34b7d') : '#f34b7d',
+        };
+    }
+  }
 
   // Smart splitting for the Hero section
   const nameParts = (user.name || 'User').trim().split(/\s+/);
